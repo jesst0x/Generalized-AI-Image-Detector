@@ -30,12 +30,12 @@ def build_model():
     
     return model
 
-def load_data(data_dir, img_height, img_width):
-    X = tf.keras.utils.image_dataset_from_directory(data_dir, seed=23, image_size=(img_height, img_width))
-    normalization_layer = tf.keras.layers.Rescaling(1./255)
-    normalized_X = X.map(lambda x: normalization_layer(x))
+# def load_data(data_dir, img_height, img_width):
+#     X = tf.keras.utils.image_dataset_from_directory(data_dir, seed=23, image_size=(img_height, img_width))
+#     normalization_layer = tf.keras.layers.Rescaling(1./255)
+#     normalized_X = X.map(lambda x: normalization_layer(x))
     
-    return normalized_X
+#     return normalized_X
 
 def split_dataset(X, label=True, ratio=[0.7, 0.2, 0.1]):
     n = X.shape[0]
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     
     # Load dataset
     X_real = util.load_data(real_img_dir)
-    X_synthetic = util.load_data(synthetic_img_dir)
+    X_synthetic = [util.load_data(img_dir) for img_dir in synthetic_img_dir]
     X_train, X_eval, X_test, Y_train, Y_eval, Y_test = combine_dataset(split_dataset(X_real, False), [split_dataset(x_synthetic) for x_synthetic in X_synthetic])
     
     print('Dataset loaded')
