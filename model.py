@@ -27,6 +27,11 @@ def build_model():
     model = models.Model(inputs=basemodel.input, outputs=predictions)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', tf.keras.metrics.AUC()])
     
+    for layer in model.layers[:40]:
+        layer.trainable = False
+    for layer in model.layers[40:]:
+        layer.trainable = True
+    
     return model
 
 # def load_data(data_dir, img_height, img_width):

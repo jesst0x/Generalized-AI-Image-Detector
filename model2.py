@@ -26,20 +26,18 @@ def build_model():
     predictions = layers.Dense(1, activation='sigmoid')(x)
     
     model = models.Model(inputs=basemodel.input, outputs=predictions)
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy', tf.keras.metrics.AUC()])
+    model.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.Adam(learning_rate=1e-6), metrics=['accuracy', tf.keras.metrics.AUC()])
+    
+    for layer in model.layers[:45]:
+        layer.trainable = False
+    for layer in model.layers[45:]:
+        layer.trainable = True
     
     return model
 
-# def load_data(data_dir, img_height, img_width):
-#     X = tf.keras.utils.image_dataset_from_directory(data_dir, seed=23, image_size=(img_height, img_width))
-#     normalization_layer = tf.keras.layers.Rescaling(1./255)
-#     normalized_X = X.map(lambda x: normalization_layer(x))
-    
-#     return normalized_X
-
 def split_dataset(X, label=True, ratio=[0.7, 0.2, 0.1]):
-    print(X.shape)
     n = X.shape[0]
+    print(X.shape)
     train_size = int(ratio[0] * n)
     eval_size = int(ratio[1] * n)
     test_size = int(ratio[2] * n)
@@ -129,7 +127,8 @@ if __name__ == '__main__':
     real_img_dir = args.real_dir.split(',')
     synthetic_img_dir = args.synthetic_dir.split(',')
     
-
+    np.random.seed(23)
+    
     X_synthetic = [util.load_data(img_dir) for img_dir in synthetic_img_dir]
     X_real = [util.load_data(img_dir) for img_dir in real_img_dir]
     print(X_real[0].shape)
@@ -144,7 +143,7 @@ if __name__ == '__main__':
     print('training model')
     # Fit ResNet50 model
     model = build_model()
-    history = model.fit(X_train, Y_train, epochs=num_epoch, batch_size=100, validation_data=(X_eval, Y_eval), shuffle=True)   
+    history = model.fit(X_train, Y_train, epochs=num_epoch, batch_size=5, validation_data=(X_eval, Y_eval), shuffle=True)   
     json.dump(history.history, open(os.path.join(logging_dir, 'result.json'), 'w'))
     print('Training completed')
     print(history.history)
@@ -152,8 +151,10 @@ if __name__ == '__main__':
     plot_history(history.history, logging_dir)
     
     #Plot ROC Curve
+    # Y_train_pred = model.predict(X_train).ravel()
     Y_eval_pred = model.predict(X_eval).ravel()
     fpr_eval, tpr_eval, thresolds_eval = roc_curve(Y_eval, Y_eval_pred)
+    # fpr_train, tpr_train, thresolds_train = roc_curve(Y_train, Y_train_pred)
     auc_eval = auc(fpr_eval, tpr_eval)
     plot_roc_curve(tpr_eval, fpr_eval, auc_eval, 'ROC Curve - Evaluation Set ', os.path.join(logging_dir, 'evaluation_ROC.png'))
     print('Completed')

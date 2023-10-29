@@ -11,7 +11,14 @@ def convert_image_to_array(filename, img_height=256, img_width=256):
 
 def load_data(dir):
     print('Loading ' + dir)
-    filenames = [os.path.join(dir, f) for f in os.listdir(dir)]
+    count = 0
+    filenames = []
+    for f in tqdm(os.listdir(dir)):
+        filenames.append(os.path.join(dir, f))
+        count += 1
+        if count == 2500:
+            break
+    # filenames = [os.path.join(dir, f) for f in os.listdir(dir)]
     X = np.array([convert_image_to_array(f) for f in tqdm(filenames)])
     X = X / 255
     print('Completed loading ' + dir)
