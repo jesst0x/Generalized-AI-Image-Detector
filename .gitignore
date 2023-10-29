@@ -7,3 +7,5 @@
 .env
 data
 .DS_Store
+*.npz
+*.npy

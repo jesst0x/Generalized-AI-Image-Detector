@@ -14,8 +14,9 @@ import util
 parser = argparse.ArgumentParser()
 parser.add_argument('--epoch', default ='10', help='Directory to save resize dataset')
 parser.add_argument('--logging_dir', default ='result', help='Directory to save experiment result')
-parser.add_argument('--real_dir', default ='../data/celeba,../data/ffhq', help='Directory of real images')
-parser.add_argument('--synthetic_dir', default ='../data/stylegan,../data/progan', help='Directory of synthetic images')
+parser.add_argument('--real_dir', default ='../data/celeba_256,../data/ffhq_256', help='Directory of real images')
+parser.add_argument('--synthetic_dir', default ='../data/stylegan_256,../data/progan_256', help='Directory of synthetic images')
+
 
 def build_model():
     basemodel = ResNet50(include_top=False, weights='imagenet', pooling='max')
@@ -37,6 +38,7 @@ def build_model():
 #     return normalized_X
 
 def split_dataset(X, label=True, ratio=[0.7, 0.2, 0.1]):
+    print(X.shape)
     n = X.shape[0]
     train_size = int(ratio[0] * n)
     eval_size = int(ratio[1] * n)
@@ -110,6 +112,7 @@ def plot_history(history_dict, logging_dir):
     plt.savefig(os.path.join(logging_dir, 'accuracy_graph.png'))
     plt.show()
     
+    plt.figure()
     plt.plot(history_dict['loss'], label='train_loss')
     plt.plot(history_dict['val_loss'], label = 'val_loss')
     plt.xlabel('Epoch')
@@ -126,23 +129,10 @@ if __name__ == '__main__':
     real_img_dir = args.real_dir.split(',')
     synthetic_img_dir = args.synthetic_dir.split(',')
     
-    print('Start Loading data')
-    X_synthetic = []
-    X_real = []
-    for i in range(2):
-        print(i)
-        real_files = np.load('real' + str(i) + '.npz', allow_pickle=True)
-        synthetic_files = np.load('synthetic' + str(i) + '.npz', allow_pickle=True)
-        X_synthetic.append(synthetic_files['arr_0'])
-        X_real.append(real_files['arr_0'])
-    
-    # real_files = np.load('train_progan.npz', allow_pickle=True)
-    # synthetic_files= np.load('train_progan.npz', allow_pickle=True)
-    # X_synthetic.append(synthetic_files['arr_0'])
-    # X_real.append(real_files['arr_0'])
-        
 
-    
+    X_synthetic = [util.load_data(img_dir) for img_dir in synthetic_img_dir]
+    X_real = [util.load_data(img_dir) for img_dir in real_img_dir]
+    print(X_real[0].shape)
     X_train, X_eval, X_test, Y_train, Y_eval, Y_test = combine_dataset([split_dataset(x_real, False) for x_real in X_real], [split_dataset(x_synthetic) for x_synthetic in X_synthetic])
     
     print('Dataset loaded')
