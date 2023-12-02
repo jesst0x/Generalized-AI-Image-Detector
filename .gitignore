@@ -9,3 +9,6 @@ data
 .DS_Store
 *.npz
 *.npy
+*.pyc
+*.png
+*training_checkpoints*

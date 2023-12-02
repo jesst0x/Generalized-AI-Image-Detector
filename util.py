@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import json
 
 def convert_image_to_array(filename, img_height=256, img_width=256):
     image = Image.open(filename)
@@ -37,7 +38,7 @@ def plot_history(history_dict, save_dir):
     plt.ylabel('Accuracy')
     plt.ylim([0.5, 1])
     plt.legend(loc='lower right')
-    plt.savefig(os.path.join(logging_dir, 'accuracy_graph.png'))
+    plt.savefig(os.path.join(save_dir, 'accuracy_graph.png'))
     plt.show()
     
     plt.figure()
@@ -49,30 +50,26 @@ def plot_history(history_dict, save_dir):
     plt.legend(loc='lower right')
     plt.savefig(os.path.join(save_dir, 'loss_graph.png'))
     plt.show()
-
-def combine_dataset(real=[], synthetic=[]):
-    X_train, X_eval, X_test, Y_train, Y_eval, Y_test = real[0]
     
-    for i in range(1, len(real)):
-        x_train, x_eval, x_test, y_train, y_eval, y_test = real[i]
-        X_train = np.concatenate((X_train, x_train))
-        X_eval = np.concatenate((X_eval, x_eval))
-        X_test = np.concatenate((X_test, x_test))
-        
-        Y_train = np.concatenate((Y_train, y_train))
-        Y_eval = np.concatenate((Y_eval, y_eval))
-        Y_test = np.concatenate((Y_test, y_test))
+    plt.figure()
+    plt.plot(history_dict['precision'], label='train_precision')
+    plt.plot(history_dict['val_precision'], label = 'val_precision')
+    plt.xlabel('Epoch')
+    plt.ylabel('Precision')
+    plt.ylim([0, 1])
+    plt.legend(loc='lower right')
+    plt.savefig(os.path.join(save_dir, 'precision_graph.png'))
+    plt.show()
     
-    for x_train, x_eval, x_test, y_train, y_eval, y_test in synthetic:
-        X_train = np.concatenate((X_train, x_train))
-        X_eval = np.concatenate((X_eval, x_eval))
-        X_test = np.concatenate((X_test, x_test))
-        
-        Y_train = np.concatenate((Y_train, y_train))
-        Y_eval = np.concatenate((Y_eval, y_eval))
-        Y_test = np.concatenate((Y_test, y_test))
-
-    return X_train, X_eval, X_test, Y_train, Y_eval, Y_test
+    plt.figure()
+    plt.plot(history_dict['recall'], label='train_recall')
+    plt.plot(history_dict['val_recall'], label = 'val_recall')
+    plt.xlabel('Epoch')
+    plt.ylabel('Recall')
+    plt.ylim([0, 1])
+    plt.legend(loc='lower right')
+    plt.savefig(os.path.join(save_dir, 'recall_graph.png'))
+    plt.show()
 
 def split_dataset(X, label=True, ratio=[0.7, 0.2, 0.1]):
     n = X.shape[0]
@@ -99,57 +96,7 @@ def split_dataset(X, label=True, ratio=[0.7, 0.2, 0.1]):
     return (X_train, X_eval, X_test, Y_train, Y_eval, Y_test)
 
 # Create dataset group - combining different dataset (eg. StyleGAN and ProGAN) into one group to feed into training model
-def combine_dataset2(real=[], synthetic=[]):
-    X_train, X_eval, Y_train, Y_eval = real[0]
-    
-    dataset_list = real[1:] + synthetic
-    
-    for x_train, x_eval, y_train, y_eval in dataset_list:
-        X_train = np.concatenate((X_train, x_train))
-        X_eval = np.concatenate((X_eval, x_eval))
-        
-        Y_train = np.concatenate((Y_train, y_train))
-        Y_eval = np.concatenate((Y_eval, y_eval))
-    
-    # for i in range(1, len(real)):
-    #     x_train, x_eval, y_train, y_eval = real[i]
-    #     X_train = np.concatenate((X_train, x_train))
-    #     X_eval = np.concatenate((X_eval, x_eval))
-        
-    #     Y_train = np.concatenate((Y_train, y_train))
-    #     Y_eval = np.concatenate((Y_eval, y_eval))
-    
-    # for x_train, x_eval, y_train, y_eval in synthetic:
-    #     X_train = np.concatenate((X_train, x_train))
-    #     X_eval = np.concatenate((X_eval, x_eval))
-        
-    #     Y_train = np.concatenate((Y_train, y_train))
-    #     Y_eval = np.concatenate((Y_eval, y_eval))
-
-    return X_train, X_eval, Y_train, Y_eval
-
-
-def split_dataset2(X, label=True, ratio=0.8):
-    n = X.shape[0]
-    print(X.shape)
-    train_size = int(ratio * n)
-    
-    np.random.shuffle(X)
-    
-    X_train = X[:train_size, :, :, :]
-    X_eval = X[train_size:, :, :, :]
-
-    if label:
-        Y_train = np.ones((X_train.shape[0], 1))
-        Y_eval = np.ones((X_eval.shape[0], 1))
-    else:
-        Y_train = np.zeros((X_train.shape[0], 1))
-        Y_eval = np.zeros((X_eval.shape[0], 1))
-    
-    return (X_train, X_eval, Y_train, Y_eval)
-
-
-def combine_dataset_3(real_dir=[], synthetic_dir=[]):
+def combine_dataset(real_dir=[], synthetic_dir=[]):
     x_real = [load_data(img_dir) for img_dir in real_dir]
     x_synthetic = [load_data(img_dir) for img_dir in synthetic_dir]
     
@@ -167,3 +114,8 @@ def combine_dataset_3(real_dir=[], synthetic_dir=[]):
     print(X.shape)
     print(Y.shape)
     return X, Y
+
+
+if __name__ == '__main__':
+    with open('./experiments/group1/history.json', 'r') as f:
+        plot_history(json.load(f), './experiments/group1')

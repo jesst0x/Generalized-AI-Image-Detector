@@ -6,53 +6,37 @@ import os
 from tqdm import tqdm
 import tensorflow as tf
 import shutil
+import model
     
     
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_file', default='../experiment/epoch_5_256x256/trained_model', help='File consists of trained model')
-parser.add_argument('--dataset_dir', default ='../../data/256x256/stylegan_psi1.0_test/test', help='Directory of images to predict and evaluate accuracy')
-parser.add_argument('--logging_dir', default='../result/stylegan_psi1.0_test_256x256', help='Directory to save evaluation result')
-parser.add_argument('--is_synthetic', default='y', help='Is provided images synthetic? y if synthetic')
 
+parser.add_argument('--real_test_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
+parser.add_argument('--synthetic_test_dir', default ='../data/eval/stylegan_256,../data/eval/progan_256', help='Directory of synthetic images')
+parser.add_argument('--logging_dir', default='experiments/group1', help='Directory to save evaluation result')
+parser.add_argument('--file_name', default='test_result.json', help='Directory to save evaluation result')
+parser.add_argument('--checkpoint_path', default='experiments/group1/training_checkpoints/cp-0004.ckpt', help='File to trained model weight')
 
 # Evaluate a test set from a trained model
 if __name__ == '__main__':
     args = parser.parse_args()
-    data_dir = args.dataset_dir
     logging_dir = args.logging_dir
-    model_file = args.model_file
-    # is_saved = True if args.save_images == 'y' else False
-    is_synthetic = True if args.is_synthetic == 'y' else False
-    # image_limit = int(args.saved_image_count)
+    file_name = args.file_name
+    real_test_img = args.real_test_dir.split(',')
+    synthetic_test_img = args.synthetic_test_dir.split(',')
+    checkpoint_path = args.checkpoint_path
     
     if not os.path.exists(logging_dir):   
         os.mkdir(logging_dir)
-    # else:
-    #     raise Exception('Logging directory already exists!')
     
-    test_X, test_Y = util.load_data(data_dir, is_synthetic) 
-
-    # Load the train model
-    reconstructed_model = tf.keras.models.load_model(model_file)
-    test_loss, test_acc = reconstructed_model.evaluate(test_X,  test_Y, verbose=2)
+    X_test, Y_test = util.combine_dataset(real_test_img, synthetic_test_img)
+    X_test = tf.keras.applications.resnet50.preprocess_input(X_test)
     
-    FILENAMES = [
-      f for f in os.listdir(data_dir)
-    ]
+    model = model.build_model()
+    model.load_weights(checkpoint_path)
     
-    FILENAMES.sort()
-    
-    Y_prediction = reconstructed_model.predict(test_X)
-    Y_prediction = tf.greater(Y_prediction, 0.5).numpy()
-    count = 0
-    for i in range(500):
-        if Y_prediction[i] != 1:
-            count += 1
-            f = FILENAMES[i][8:]
-            df = os.path.join('../result/stylegan_psi1.0_test_256x256/false_negatives', f)
-            shutil.copy(os.path.join('../../data/raw/stylegan_psi1.0_test', f),df)
-    
-    print(count)
-    print(f'Accuracy: {test_acc}')
-    with open(os.path.join(logging_dir, 'result.txt'), 'w') as f:
-        f.write(f'Accuracy: {test_acc}')
+    y_pred = model.predict(X_test).ravel()
+    loss, acc, auc, precision, recall = model.evaluate(X_test, Y_test)
+    result = {'loss': loss, 'accuracy': acc, 'auc': auc, 'precision': precision, 'recall': recall}
+    json.dump(result, open(os.path.join(logging_dir, file_name), 'w'))
+    print(result)
