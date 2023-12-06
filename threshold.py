@@ -15,12 +15,12 @@ import general_evaluate
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--logging_dir', default ='experiments/group1/resnet_l40_a5_b10_n20/', help='Directory to save experiment result')
+parser.add_argument('--logging_dir', default ='experiments/group3/resnet_l40_a6_b50_n40/', help='Directory to save experiment result')
 parser.add_argument('--real_eval_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
-parser.add_argument('--synthetic_eval_dir', default ='../data/eval/progan_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_eval_dir', default ='../data/eval/stylegan2_256', help='Directory of synthetic images')
 parser.add_argument('--real_eval_n', default ='500,500', help='Number of training example in each real eval set separated by comma')
 parser.add_argument('--synthetic_eval_n', default ='1000', help='Number of training example in each synthetic eval separated by comma')
-parser.add_argument('--checkpoint_path', default='experiments/group1/resnet_l40_a5_b10_n20//training_checkpoints/cp-0006.ckpt', help='File to trained model weight')
+parser.add_argument('--checkpoint_path', default='experiments/group3/resnet_l40_a6_b50_n40/training_checkpoints/cp-0040.ckpt', help='File to trained model weight')
 
 # Find optimal threshold by roc or f1 score
 def compute_optimal_threshold(Y, Y_pred_prob, mode='roc'):
