@@ -1,16 +1,14 @@
-import util
 import numpy as np
 import argparse
 import json
 import os
-from tqdm import tqdm
 import tensorflow as tf
-import shutil
-import model
-from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve
+from sklearn.metrics import confusion_matrix, roc_curve, auc
+import PIL.Image
+
+import util
 import resnet
 import ensemble
-import PIL.Image
     
     
 parser = argparse.ArgumentParser()
@@ -21,21 +19,19 @@ parser.add_argument('--synthetic_test_dir', default ='../data/test/ldm_256', hel
 parser.add_argument('--synthetic_test_n', default ='1000', help='Number of training example in each synthetic test set separated by comma')
 
 # Logging directory
-parser.add_argument('--logging_dir', default='experiments/group1/resnet_l40_a5_b10_n20/', help='Directory to save evaluation result')
+parser.add_argument('--logging_dir', default='experiments/group3/ensemble_1,1,2,1,1,2_a6_b100_n5', help='Directory to save evaluation result')
 parser.add_argument('--file_name', default='ldm_test', help='Directory to save evaluation result')
 
 # Directory to load trained weight
-parser.add_argument('--model_dir', default='experiments/group1/resnet_l40_a5_b10_n20/', help='File to trained model weight')
-parser.add_argument('--checkpoint_path', default='experiments/group1/resnet_l40_a5_b10_n20/training_checkpoints/cp-0006.ckpt', help='File to trained model of resnet')
+parser.add_argument('--model_dir', default='experiments/group3/ensemble_1,1,2,1,1,2_a6_b100_n5', help='File to trained model weight')
+parser.add_argument('--resnet_checkpoint', default='cp-0010.ckpt', help='Checkpoint of trained model of resnet')
 
 # Threshold to calculate accuracy and confusion matrix
-parser.add_argument('--threshold', default='0.77', help='Threshold for binary classification')
+parser.add_argument('--threshold', default='0.54', help='Threshold for binary classification')
 
 # To save misclassified images for error analysis
 parser.add_argument('--save_img', default='y', help='To save misclassified images')
 
-# Model type
-parser.add_argument('--is_resnet', default='y', help='Resnet or ensemble model')
 
 def compute_metrics(y, y_pred_prob, threshold=0.5):
     n = y.shape[0]
@@ -60,9 +56,26 @@ def compute_metrics(y, y_pred_prob, threshold=0.5):
         'f1_score': f1_score,
         'auc': auc_eval,
     }
+    
+def error_analysis(X_test, Y_test, y_pred_prob, threshold, logging_dir, file_name, save_img=True):
+    y_pred = np.where(y_pred_prob > threshold, 1, 0)
+    misclassified_filter = (y_pred != Y_test).reshape((y_pred.shape[0],))
+    index = np.arange(y_pred.shape[0])
+    misclassified_index = index[misclassified_filter]
+    json.dump({'misclassified': misclassified_index.tolist()}, open(os.path.join(logging_dir, file_name + '_misclassified.json'), 'w'))
+    
+    if save_img:
+        outdir = os.path.join(logging_dir, file_name + '_misclassfied')
+        if not os.path.exists(outdir):   
+            os.mkdir(outdir)
+        X_misclassified = X_test[misclassified_filter, :, :, :]
+        n_x, img_size, img_size, channel = X_misclassified.shape
+        for i in range(n_x):
+            img_arr = np.uint8(X_misclassified[i, :, :, :] * 255)
+            PIL.Image.fromarray(img_arr).save(f'{outdir}/{misclassified_index[i]}.png')
 
 # Evaluate a test set with weights saved in checkpoints of a trained model.
-if __name__ == '__main__':
+def evaluate():
     args = parser.parse_args()
     logging_dir = args.logging_dir
     file_name = args.file_name
@@ -70,13 +83,12 @@ if __name__ == '__main__':
     synthetic_test_img = args.synthetic_test_dir.split(',')
     synthetic_test_n = [int(i) for i in args.synthetic_test_n.split(',')]
     real_test_n = [int(i) for i in args.real_test_n.split(',')]
-    checkpoint_path = args.checkpoint_path
     model_dir = args.model_dir
+    checkpoint_path = os.path.join(model_dir, 'training_checkpoints/' + args.resnet_checkpoint)
     threshold = float(args.threshold) # Optimal threshold in evaluation set
     save_img = True if args.save_img == 'y' else False
-    # Resnet or ensemble model
-    is_resnet = True if args.is_resnet == 'y' else False
-
+    
+    # Load model details
     with open(os.path.join(model_dir, 'model_summary.json')) as f:
         model_summary = json.load(f)
         print(model_summary)
@@ -104,18 +116,10 @@ if __name__ == '__main__':
     result = compute_metrics(Y_test, y_pred_prob, threshold)
     json.dump(result, open(os.path.join(logging_dir, 'result_' + file_name + '_t' + str(threshold) + '.json'), 'w'))
     print(result)
+    
     # Save misclassified image index based on threshold for error analysis
-    y_pred = np.where(y_pred_prob > threshold, 1, 0)
-    misclassified_filter = (y_pred != Y_test).reshape((y_pred.shape[0],))
-    index = np.arange(y_pred.shape[0])
-    misclassified_index = index[misclassified_filter]
-    json.dump({'misclassified': misclassified_index.tolist()}, open(os.path.join(logging_dir, file_name + '_misclassified.json'), 'w'))
-    if save_img:
-        outdir = os.path.join(logging_dir, file_name + '_misclassfied')
-        if not os.path.exists(outdir):   
-            os.mkdir(outdir)
-        X_misclassified = X_test[misclassified_filter, :, :, :]
-        n_x, img_size, img_size, channel = X_misclassified.shape
-        for i in range(n_x):
-            img_arr = np.uint8(X_misclassified[i, :, :, :] * 255)
-            PIL.Image.fromarray(img_arr).save(f'{outdir}/{misclassified_index[i]}.png')
+    error_analysis(X_test, Y_test, y_pred_prob, threshold, logging_dir, file_name, save_img)
+
+if __name__ == '__main__':
+    evaluate()
+    

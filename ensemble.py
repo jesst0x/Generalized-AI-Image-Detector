@@ -30,9 +30,7 @@ class CNN:
         
     def predict(self, X):
         prob = self.predict_prob(X)
-        print(prob.shape)
         pred = prob > 0.5
-        del self.model
         return pred
         
     def predict_prob(self, X):
@@ -45,7 +43,7 @@ class CNN:
         for i in range(n_batch):
             prob[i * batch_size: (i + 1) * batch_size] = self.model.predict(X[i * batch_size: (i + 1) * batch_size])
         if n_batch * batch_size < n:
-            prob[n * batch_size:] = self.model.predict(X[n * batch_size:])
+            prob[n_batch * batch_size:] = self.model.predict(X[n_batch * batch_size:])
         return prob
         
     def build_model(self, img_size=256, learning_rate=1e-5):
@@ -71,6 +69,11 @@ class AdaBoost:
         self.weighted_errors = []
         self.nn_layers = []
         
+    def clear_memory(self, cnn):
+        tf.keras.backend.clear_session()
+        del cnn.model
+        del cnn
+        gc.collect()
         
     def train(self, X, Y, X_eval, Y_eval, learning_rate, batch_size, n_epoch, nn_layers, logging_dir):
         n = X.shape[0]
@@ -85,16 +88,14 @@ class AdaBoost:
                 os.mkdir(new_logging_dir)
             
             print('layer', i, new_logging_dir)
-            tf.keras.backend.clear_session() # # Release previous model from memory
             cnn = CNN(layer)
-            print('train')
             cnn.train(X, Y, X_eval, Y_eval, learning_rate, batch_size, n_epoch, self.alpha, new_logging_dir)
             Y_pred = (cnn.predict(X)).reshape((n, 1))
             self.update_param(Y, Y_pred)
-            tf.keras.backend.clear_session()
+            
+            # Release previous model from memory
             del Y_pred
-            del cnn
-            gc.collect()
+            self.clear_memory(cnn)
 
         result = {'estimator_weights': self.estimator_weights, 'weighted_errors':self.weighted_errors, 'estimator_dir': self.estimator_dirs, 'nn_layers': self.nn_layers}
         print(result)
@@ -135,18 +136,15 @@ class AdaBoost:
         pred_prob = np.zeros((n, 1))
         
         for i, dir in enumerate(self.estimator_dirs):
-            tf.keras.backend.clear_session()
             cnn = CNN(self.nn_layers[i])
             model = cnn.build_model(X.shape[1])
             latest = tf.train.latest_checkpoint(os.path.join(dir, 'training_checkpoints'))
-            print(latest)
             model.load_weights(latest)
 
             pred_prob += (self.estimator_weights[i] * model.predict(X))
             
             del model
-            del cnn
-            gc.collect()
+            self.clear_memory(cnn)
             
         pred_prob /= sum(self.estimator_weights)
         

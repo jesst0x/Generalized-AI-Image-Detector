@@ -8,33 +8,34 @@ import numpy as np
 import util
 import resnet
 import ensemble
-import evaluate
 
 parser = argparse.ArgumentParser()
 
 # Logging directory
-parser.add_argument('--logging_dir', default ='experiments/group1/resnet_l40_a5_b20_n20', help='Directory to save experiment result')
+parser.add_argument('--logging_dir', default ='experiments/group3/ensemble_1,1,2,1,1,2_a6_b100_n5', help='Directory to save experiment result')
 
 # Dataset directory
-parser.add_argument('--synthetic_train_dir', default ='../data/train/progan_256', help='Directory of synthetic images')
-parser.add_argument('--synthetic_eval_dir', default ='../data/eval/progan_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_train_dir', default ='../data/train/stylegan_256,../data/train/progan_256,../data/train/vqgan_256,../data/train/ldm_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_eval_dir', default ='../data/eval/stylegan2_256', help='Directory of synthetic images')
 parser.add_argument('--real_train_dir', default ='../data/train/celeba_256,../data/train/ffhq_256', help='Directory of real images')
 parser.add_argument('--real_eval_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
-parser.add_argument('--synthetic_train_n', default ='3600', help='Number of training example in each synthetic train set separated by comma')
+parser.add_argument('--synthetic_train_n', default ='850,850,850,850', help='Number of training example in each synthetic train set separated by comma')
 parser.add_argument('--synthetic_eval_n', default ='900', help='Number of training example in each synthetic eval separated by comma')
-parser.add_argument('--real_train_n', default ='1800,1800', help='Number of training example in each real train set separated by comma')
+parser.add_argument('--real_train_n', default ='1700,1700', help='Number of training example in each real train set separated by comma')
 parser.add_argument('--real_eval_n', default ='450,450', help='Number of training example in each real eval set separated by comma')
 
 # Hyperparameters
-parser.add_argument('--batch_size', default ='10', help='Mini-batch size')
-parser.add_argument('--epoch', default ='20', help='Directory to save resize dataset')
-parser.add_argument('--learning_rate', default='1e-5', help='Learning rate')
+parser.add_argument('--batch_size', default ='100', help='Mini-batch size')
+parser.add_argument('--epoch', default ='5', help='Directory to save resize dataset')
+parser.add_argument('--learning_rate', default='1e-6', help='Learning rate')
 parser.add_argument('--freeze_layer', default='40', help='Frozen first n resnet50 layer')
-parser.add_argument('--nn_layers', default='1,1,1,1', help='Number of layers in base estimators of ensemble model')
+parser.add_argument('--nn_layers', default='1,1,2,1,1,2', help='Number of layers in base estimators of ensemble model')
 # Model type
 parser.add_argument('--is_resnet', default='y', help='Resnet or ensemble model')
 
-if __name__ == '__main__':
+
+# Training resnet or ensemble model
+def train():
     args = parser.parse_args()
     logging_dir = args.logging_dir
     real_train_img = args.real_train_dir.split(',')
@@ -54,9 +55,9 @@ if __name__ == '__main__':
     freeze_layer = int(args.freeze_layer)
     nn_layers = [int(l) for l in args.nn_layers.split(',')]
 
-    
     if not os.path.exists(logging_dir):   
         os.mkdir(logging_dir)
+        
     # Save model architects
     model_summary = {'learning_rate': learning_rate, 'batch_size':batch_size, 'num_epoch': num_epoch}
     if is_resnet:
@@ -101,3 +102,7 @@ if __name__ == '__main__':
     idx = np.argmax(f1scores)
     optimal_threshold = thresolds[idx]
     print(optimal_threshold, f1scores[idx])
+
+if __name__ == '__main__':
+    train()
+  

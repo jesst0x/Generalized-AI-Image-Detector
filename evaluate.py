@@ -3,9 +3,7 @@ import numpy as np
 import argparse
 import json
 import os
-from tqdm import tqdm
 import tensorflow as tf
-import shutil
 import model
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve
     
