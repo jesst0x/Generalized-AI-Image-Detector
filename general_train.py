@@ -12,24 +12,27 @@ import evaluate
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--logging_dir', default ='experiments/group2/ensemble_a5_b10_n5', help='Directory to save experiment result')
+# Logging directory
+parser.add_argument('--logging_dir', default ='experiments/group1/resnet_l40_a5_b20_n20', help='Directory to save experiment result')
 
-parser.add_argument('--synthetic_train_dir', default ='../data/train/stylegan_256,../data/train/progan_256,../data/train/vqgan_256,../data/train/ldm_256', help='Directory of synthetic images')
-parser.add_argument('--synthetic_eval_dir', default ='../data/eval/stylegan_256,../data/eval/progan_256,../data/eval/vqgan_256,../data/eval/ldm_256', help='Directory of synthetic images')
+# Dataset directory
+parser.add_argument('--synthetic_train_dir', default ='../data/train/progan_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_eval_dir', default ='../data/eval/progan_256', help='Directory of synthetic images')
 parser.add_argument('--real_train_dir', default ='../data/train/celeba_256,../data/train/ffhq_256', help='Directory of real images')
 parser.add_argument('--real_eval_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
-parser.add_argument('--synthetic_train_n', default ='500,500,500,500', help='Number of training example in each synthetic train set separated by comma')
-parser.add_argument('--synthetic_eval_n', default ='250,250,250,250', help='Number of training example in each synthetic eval separated by comma')
-parser.add_argument('--real_train_n', default ='1000,1000', help='Number of training example in each real train set separated by comma')
-parser.add_argument('--real_eval_n', default ='500,500', help='Number of training example in each real eval set separated by comma')
+parser.add_argument('--synthetic_train_n', default ='3600', help='Number of training example in each synthetic train set separated by comma')
+parser.add_argument('--synthetic_eval_n', default ='900', help='Number of training example in each synthetic eval separated by comma')
+parser.add_argument('--real_train_n', default ='1800,1800', help='Number of training example in each real train set separated by comma')
+parser.add_argument('--real_eval_n', default ='450,450', help='Number of training example in each real eval set separated by comma')
 
-parser.add_argument('--batch_size', default ='20', help='Mini-batch size')
-parser.add_argument('--epoch', default ='5', help='Directory to save resize dataset')
+# Hyperparameters
+parser.add_argument('--batch_size', default ='10', help='Mini-batch size')
+parser.add_argument('--epoch', default ='20', help='Directory to save resize dataset')
 parser.add_argument('--learning_rate', default='1e-5', help='Learning rate')
 parser.add_argument('--freeze_layer', default='40', help='Frozen first n resnet50 layer')
 parser.add_argument('--nn_layers', default='1,1,1,1', help='Number of layers in base estimators of ensemble model')
-
-parser.add_argument('--is_resnet', default='n', help='Frozen first n resnet50 layer')
+# Model type
+parser.add_argument('--is_resnet', default='y', help='Resnet or ensemble model')
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -98,6 +101,3 @@ if __name__ == '__main__':
     idx = np.argmax(f1scores)
     optimal_threshold = thresolds[idx]
     print(optimal_threshold, f1scores[idx])
-    
-    print(evaluate.compute_metrics(Y_train, model.predict(X_train)))
-    print(evaluate.compute_metrics(Y_eval, Y_eval_pred))

@@ -24,8 +24,6 @@ class CNN:
         img_size = X.shape[1]
         # Build model
         self.build_model(img_size, learning_rate)
-        # self.model.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), metrics=['accuracy', tf.keras.metrics.AUC(), tf.keras.metrics.AUC(curve='PR'), tf.keras.metrics.Precision(), tf.keras.metrics.Recall()])
-        # Train model
         history = self.model.fit(X, Y, epochs=n_epoch, batch_size=batch_size, sample_weight=sample_weight,validation_data=(X_eval, Y_eval),callbacks =[cp_callback], shuffle=True) 
         json.dump(history.history, open(os.path.join(logging_dir, 'history.json'), 'w'))
         

@@ -14,6 +14,7 @@ def convert_image_to_array(filename, img_height=256, img_width=256):
 def load_data(dir, n=None):
     print('Loading ' + dir)
     filenames = [os.path.join(dir, f) for f in os.listdir(dir)]
+    filenames.sort()
     if n != None:
         filenames = filenames[:n]
     X = np.array([convert_image_to_array(f) for f in tqdm(filenames)])
@@ -90,26 +91,6 @@ def split_dataset(X, label=True, ratio=[0.7, 0.2, 0.1]):
         Y_eval = np.zeros((X_eval.shape[0], 1))
     
     return (X_train, X_eval, X_test, Y_train, Y_eval, Y_test)
-
-# Create dataset group - combining different dataset (eg. StyleGAN and ProGAN) into one group to feed into training model
-# def combine_dataset(real_dir=[], synthetic_dir=[]):
-#     x_real = [load_data(img_dir) for img_dir in real_dir]
-#     x_synthetic = [load_data(img_dir) for img_dir in synthetic_dir]
-    
-#     X = np.concatenate(x_synthetic + x_real)
-#     y_array = []
-#     n_synthetic = sum([s.shape[0] for s in x_synthetic])
-#     n_real = sum([r.shape[0] for r in x_real])
-    
-#     if n_synthetic:
-#         y_array.append(np.ones((n_synthetic, 1)))
-#     if n_real:
-#         y_array.append(np.zeros((n_real, 1)))
-    
-#     Y = np.concatenate(y_array)
-#     print(X.shape)
-#     print(Y.shape)
-#     return X, Y
 
 def combine_dataset(real_dir=[], synthetic_dir=[], real_n=[], synthetic_n=[]):
     x_real = [load_data(img_dir, real_n[i]) for i, img_dir in enumerate(real_dir)]

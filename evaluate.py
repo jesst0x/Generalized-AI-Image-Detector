@@ -13,19 +13,20 @@ from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_c
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--real_test_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
-parser.add_argument('--real_test_n', default ='500,500', help='Number of training example in each real test sets separated by comma')
-parser.add_argument('--synthetic_test_dir', default ='../data/eval/progan_256', help='Directory of synthetic images')
+parser.add_argument('--real_test_n', default ='250,250', help='Number of training example in each real test sets separated by comma')
+parser.add_argument('--synthetic_test_dir', default ='../data/test/stylegan2_256', help='Directory of synthetic images')
 parser.add_argument('--synthetic_test_n', default ='1000', help='Number of training example in each synthetic test set separated by comma')
 
-parser.add_argument('--logging_dir', default='experiments/group1', help='Directory to save evaluation result')
+parser.add_argument('--logging_dir', default='experiments/group1/l45_a5_b10_n10/', help='Directory to save evaluation result')
 parser.add_argument('--file_name', default='eval', help='Directory to save evaluation result')
 
-parser.add_argument('--checkpoint_path', default='experiments/group3/l40_a6_b50_n40/training_checkpoints/cp-0010.ckpt', help='File to trained model weight')
+parser.add_argument('--checkpoint_path', default='experiments/group1/l45_a5_b10_n10/training_checkpoints/cp-0004.ckpt', help='File to trained model weight')
 parser.add_argument('--threshold', default='0.5', help='Threshold for binary classification')
 
 def compute_metrics(y, y_pred_prob, threshold=0.5):
     n = y.shape[0]
     y_pred = np.where(y_pred_prob > threshold, 1, 0)
+    print(y_pred[:10], y_pred[-10:])
     tn, fp, fn, tp = confusion_matrix(y, y_pred).ravel()
     acc = (tp + tn) / n
     precision = tp / (tp + fp)

@@ -15,13 +15,13 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--logging_dir', default ='experiments/group2/l40_a6_b20_n40', help='Directory to save experiment result')
 
-parser.add_argument('--synthetic_train_dir', default ='../data/train/stylegan_256,../data/train/progan_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_train_dir', default ='../data/train/stylegan_256,../data/train/progan_256,../data/train/vqgan_256,../data/train/ldm_256', help='Directory of synthetic images')
 parser.add_argument('--synthetic_eval_dir', default ='../data/eval/stylegan2_256', help='Directory of synthetic images')
 parser.add_argument('--real_train_dir', default ='../data/train/celeba_256,../data/train/ffhq_256', help='Directory of real images')
 parser.add_argument('--real_eval_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
-parser.add_argument('--synthetic_train_n', default ='1750,1750', help='Number of training example in each synthetic train set separated by comma')
+parser.add_argument('--synthetic_train_n', default ='500,500,500,500', help='Number of training example in each synthetic train set separated by comma')
 parser.add_argument('--synthetic_eval_n', default ='1000', help='Number of training example in each synthetic eval separated by comma')
-parser.add_argument('--real_train_n', default ='1750,1750', help='Number of training example in each real train set separated by comma')
+parser.add_argument('--real_train_n', default ='1000,1000', help='Number of training example in each real train set separated by comma')
 parser.add_argument('--real_eval_n', default ='500,500', help='Number of training example in each real eval set separated by comma')
 
 parser.add_argument('--batch_size', default ='20', help='Mini-batch size')

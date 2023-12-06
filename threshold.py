@@ -11,17 +11,27 @@ from tqdm import tqdm
 import model
 
 import util
-import evaluate
+import general_evaluate
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--logging_dir', default ='experiments/group3/l45_a6_b10_n20', help='Directory to save experiment result')
+parser.add_argument('--logging_dir', default ='experiments/group1/resnet_l40_a5_b10_n20/', help='Directory to save experiment result')
 parser.add_argument('--real_eval_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
-parser.add_argument('--synthetic_eval_dir', default ='../data/eval/stylegan_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_eval_dir', default ='../data/eval/progan_256', help='Directory of synthetic images')
 parser.add_argument('--real_eval_n', default ='500,500', help='Number of training example in each real eval set separated by comma')
 parser.add_argument('--synthetic_eval_n', default ='1000', help='Number of training example in each synthetic eval separated by comma')
-parser.add_argument('--checkpoint_path', default='experiments/group3/l45_a6_b10_n20/training_checkpoints/cp-0004.ckpt', help='File to trained model weight')
+parser.add_argument('--checkpoint_path', default='experiments/group1/resnet_l40_a5_b10_n20//training_checkpoints/cp-0006.ckpt', help='File to trained model weight')
 
+# Find optimal threshold by roc or f1 score
+def compute_optimal_threshold(Y, Y_pred_prob, mode='roc'):
+    if mode == 'roc':
+        fpr, tpr, thresholds = roc_curve(Y, Y_pred_prob)
+        return thresholds[np.argmin(np.abs(fpr + tpr - 1))]
+    else:
+        precision, recall, thresolds = precision_recall_curve(Y_eval, Y_eval_pred)
+        f1scores = 2 * (precision * recall) / (precision + recall)
+        return thresolds[np.argmax(f1scores)]
+    
 # Find optimal threshold by using evaluation set and saved weight from training checkpoint
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -49,12 +59,12 @@ if __name__ == '__main__':
     
     ## Compute Optimal thresold using argmax f1 score
     Y_eval_pred = model.predict(X_eval).ravel()
-    precision, recall, thresolds = precision_recall_curve(Y_eval, Y_eval_pred)
-    f1scores = 2 * (precision * recall) / (precision + recall)
-    idx = np.argmax(f1scores)
-    optimal_threshold = thresolds[idx]
-    print('Optimal threshold: ', optimal_threshold, 'Max f1 scores: ', f1scores[idx])
+    roc_optimal_threshold = compute_optimal_threshold(Y_eval, Y_eval_pred)
+    f1_optimal_threshold = compute_optimal_threshold(Y_eval, Y_eval_pred, 'f1')
+    print('ROC Optimal threshold: ', roc_optimal_threshold, 'f1 Optimal Threshold',f1_optimal_threshold)
     
     # Getting metrics of evaluatin set using optimal threshold
-    result = evaluate.compute_metrics(Y_eval, Y_eval_pred, optimal_threshold)
-    print(result)
+    result_roc = general_evaluate.compute_metrics(Y_eval, Y_eval_pred, roc_optimal_threshold)
+    print(result_roc)
+    result_f1 = general_evaluate.compute_metrics(Y_eval, Y_eval_pred, f1_optimal_threshold)
+    print(result_f1)

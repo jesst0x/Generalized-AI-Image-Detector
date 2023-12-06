@@ -1,0 +1,26 @@
+{
+    "estimator_weights": [
+        0.7097180517302253,
+        0.12056724774930729,
+        0.19147520830224612,
+        0.22656224204554617
+    ],
+    "weighted_errors": [
+        0.19474999999999998,
+        0.44000679112005253,
+        0.4054154900070606,
+        0.38861814928274585
+    ],
+    "estimator_dir": [
+        "experiments/group3/ensemble_a5_b20_n5/0_1",
+        "experiments/group3/ensemble_a5_b20_n5/1_1",
+        "experiments/group3/ensemble_a5_b20_n5/2_1",
+        "experiments/group3/ensemble_a5_b20_n5/3_1"
+    ],
+    "nn_layers": [
+        1,
+        1,
+        1,
+        1
+    ]
+}
