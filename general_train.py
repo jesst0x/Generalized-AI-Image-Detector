@@ -12,24 +12,26 @@ import ensemble
 parser = argparse.ArgumentParser()
 
 # Logging directory
-parser.add_argument('--logging_dir', default ='experiments/group3/ensemble_1,1,2,1,1,2_a6_b100_n5', help='Directory to save experiment result')
+parser.add_argument('--logging_dir', default ='experiments/group3/resnet_l35_a6_b20_n50_decay', help='Directory to save experiment result')
 
 # Dataset directory
 parser.add_argument('--synthetic_train_dir', default ='../data/train/stylegan_256,../data/train/progan_256,../data/train/vqgan_256,../data/train/ldm_256', help='Directory of synthetic images')
-parser.add_argument('--synthetic_eval_dir', default ='../data/eval/stylegan2_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_eval_dir', default ='../data/eval/stylegan_256,../data/eval/progan_256,../data/eval/vqgan_256,../data/eval/ldm_256', help='Directory of synthetic images')
 parser.add_argument('--real_train_dir', default ='../data/train/celeba_256,../data/train/ffhq_256', help='Directory of real images')
 parser.add_argument('--real_eval_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
-parser.add_argument('--synthetic_train_n', default ='850,850,850,850', help='Number of training example in each synthetic train set separated by comma')
-parser.add_argument('--synthetic_eval_n', default ='900', help='Number of training example in each synthetic eval separated by comma')
-parser.add_argument('--real_train_n', default ='1700,1700', help='Number of training example in each real train set separated by comma')
+parser.add_argument('--synthetic_train_n', default ='900,900,900,900', help='Number of training example in each synthetic train set separated by comma')
+parser.add_argument('--synthetic_eval_n', default ='225,225,225,225', help='Number of training example in each synthetic eval separated by comma')
+parser.add_argument('--real_train_n', default ='1800,1800', help='Number of training example in each real train set separated by comma')
 parser.add_argument('--real_eval_n', default ='450,450', help='Number of training example in each real eval set separated by comma')
 
 # Hyperparameters
-parser.add_argument('--batch_size', default ='100', help='Mini-batch size')
-parser.add_argument('--epoch', default ='5', help='Directory to save resize dataset')
+parser.add_argument('--batch_size', default ='20', help='Mini-batch size')
+parser.add_argument('--epoch', default ='50', help='Directory to save resize dataset')
 parser.add_argument('--learning_rate', default='1e-6', help='Learning rate')
-parser.add_argument('--freeze_layer', default='40', help='Frozen first n resnet50 layer')
+parser.add_argument('--freeze_layer', default='35', help='Frozen first n resnet50 layer')
 parser.add_argument('--nn_layers', default='1,1,2,1,1,2', help='Number of layers in base estimators of ensemble model')
+parser.add_argument('--decay_rate', default='0.9', help='Decay rate of learning rate')
+parser.add_argument('--decay_epoch', default='5', help='Number of epoch to decay')
 # Model type
 parser.add_argument('--is_resnet', default='y', help='Resnet or ensemble model')
 
@@ -54,12 +56,14 @@ def train():
     learning_rate = float(args.learning_rate)
     freeze_layer = int(args.freeze_layer)
     nn_layers = [int(l) for l in args.nn_layers.split(',')]
+    decay_rate = float(args.decay_rate) if args.decay_rate != '1' else 1
+    decay_epoch = int(args.decay_epoch)
 
     if not os.path.exists(logging_dir):   
         os.mkdir(logging_dir)
-        
+    tf.keras.backend.clear_session()
     # Save model architects
-    model_summary = {'learning_rate': learning_rate, 'batch_size':batch_size, 'num_epoch': num_epoch}
+    model_summary = {'learning_rate': learning_rate, 'batch_size':batch_size, 'num_epoch': num_epoch, 'decay_rate': decay_rate, 'decay_epoch': decay_epoch}
     if is_resnet:
         model_summary['model']  = 'resnet'  
         model_summary['freeze_layer'] = freeze_layer
@@ -84,7 +88,7 @@ def train():
         
     model = None
     if is_resnet:
-        model = resnet.train(X_train, Y_train, X_eval, Y_eval, num_epoch, batch_size, learning_rate, freeze_layer, logging_dir)
+        model = resnet.train(X_train, Y_train, X_eval, Y_eval, num_epoch, batch_size, learning_rate, decay_rate, decay_epoch, freeze_layer, logging_dir)
     else:
         model = ensemble.AdaBoost()
         model.train(X_train, Y_train, X_eval, Y_eval, learning_rate, batch_size, num_epoch, nn_layers, logging_dir)

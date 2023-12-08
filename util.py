@@ -67,6 +67,15 @@ def plot_history(history_dict, save_dir):
     plt.ylim([0, 1])
     plt.legend(loc='lower right')
     plt.savefig(os.path.join(save_dir, 'recall_graph.png'))
+    
+    plt.figure()
+    plt.plot(history_dict['auc'], label='train_auc')
+    plt.plot(history_dict['val_auc'], label = 'val_auc')
+    plt.xlabel('Epoch')
+    plt.ylabel('Auc')
+    plt.ylim([0, 1])
+    plt.legend(loc='lower right')
+    plt.savefig(os.path.join(save_dir, 'auc_graph.png'))
 
 def split_dataset(X, label=True, ratio=[0.7, 0.2, 0.1]):
     n = X.shape[0]

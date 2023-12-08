@@ -15,19 +15,19 @@ parser = argparse.ArgumentParser()
 # Evaluation or test dataset
 parser.add_argument('--real_test_dir', default ='../data/eval/celeba_256,../data/eval/ffhq_256', help='Directory of real images')
 parser.add_argument('--real_test_n', default ='500,500', help='Number of training example in each real test sets separated by comma')
-parser.add_argument('--synthetic_test_dir', default ='../data/test/ldm_256', help='Directory of synthetic images')
+parser.add_argument('--synthetic_test_dir', default ='../data/test/vqgan_256', help='Directory of synthetic images')
 parser.add_argument('--synthetic_test_n', default ='1000', help='Number of training example in each synthetic test set separated by comma')
 
 # Logging directory
-parser.add_argument('--logging_dir', default='experiments/group3/ensemble_1,1,2,1,1,2_a6_b100_n5', help='Directory to save evaluation result')
-parser.add_argument('--file_name', default='ldm_test', help='Directory to save evaluation result')
+parser.add_argument('--logging_dir', default='experiments/group1/resnet_l40_a5_b20_n20_decay', help='Directory to save evaluation result')
+parser.add_argument('--file_name', default='vqgan_test', help='Directory to save evaluation result')
 
 # Directory to load trained weight
-parser.add_argument('--model_dir', default='experiments/group3/ensemble_1,1,2,1,1,2_a6_b100_n5', help='File to trained model weight')
-parser.add_argument('--resnet_checkpoint', default='cp-0010.ckpt', help='Checkpoint of trained model of resnet')
+parser.add_argument('--model_dir', default='experiments/group1/resnet_l40_a5_b20_n20_decay', help='File to trained model weight')
+parser.add_argument('--resnet_checkpoint', default='cp-0008.ckpt', help='Checkpoint of trained model of resnet')
 
 # Threshold to calculate accuracy and confusion matrix
-parser.add_argument('--threshold', default='0.54', help='Threshold for binary classification')
+parser.add_argument('--threshold', default='0.47', help='Threshold for binary classification')
 
 # To save misclassified images for error analysis
 parser.add_argument('--save_img', default='y', help='To save misclassified images')
@@ -103,7 +103,7 @@ def evaluate():
     if model_summary['model'] == 'resnet':
         X_test_processed = tf.keras.applications.resnet50.preprocess_input(X_test_processed)
         model = resnet.build_model()
-        model.load_weights(checkpoint_path)
+        model.load_weights(checkpoint_path).expect_partial() # We don't need decay learning rate in predict
     else:
         # Ensemble
         with open(os.path.join(model_dir, 'weights.json')) as f:
