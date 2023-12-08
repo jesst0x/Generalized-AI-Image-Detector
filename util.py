@@ -118,8 +118,3 @@ def combine_dataset(real_dir=[], synthetic_dir=[], real_n=[], synthetic_n=[]):
     print(X.shape)
     print(Y.shape)
     return X, Y
-
-
-if __name__ == '__main__':
-    with open('./experiments/group1/history.json', 'r') as f:
-        plot_history(json.load(f), './experiments/group1')
