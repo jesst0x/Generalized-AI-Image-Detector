@@ -32,7 +32,7 @@ if __name__ == '__main__':
     img_name = args.image_name
     img_size = int(args.image_size)
 
-    i = 5000
+    i = 0
     for f in tqdm(os.listdir(data_dir)):
         original_file = os.path.join(data_dir, f)
         if original_file.endswith('.png'):
@@ -41,3 +41,5 @@ if __name__ == '__main__':
             dest_file = os.path.join(output_dir, img_name + str(i ) +'.png' )
             image.save(dest_file)
             i += 1
+        if i == count:
+            break
